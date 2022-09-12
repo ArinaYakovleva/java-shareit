@@ -169,7 +169,7 @@ class UserControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    private void editTest(String content, String expectedResult) throws Exception{
+    private void editTest(String content, String expectedResult) throws Exception {
         mockMvc.perform(patch("/users/2")
                         .content(content)
                         .contentType(MediaType.APPLICATION_JSON))
