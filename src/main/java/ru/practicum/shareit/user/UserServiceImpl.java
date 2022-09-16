@@ -5,14 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.exceptions.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.storage.UserStorage;
 
 import java.util.List;
 
 @Service
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements BaseUserService {
     private final UserStorage storage;
 
     @Autowired
@@ -58,12 +57,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long id) {
-        User user = storage.deleteUser(id);
-        if (user == null) {
-            String errorMessage = String.format("Пользователь с id=%d не найден", id);
-            log.error(errorMessage);
-            throw new NotFoundException(errorMessage);
-        }
+        storage.deleteUser(id);
         log.info(String.format("Удаление пользователя с id=%d", id));
     }
 }

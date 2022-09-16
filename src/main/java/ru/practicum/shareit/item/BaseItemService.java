@@ -14,4 +14,6 @@ public interface BaseItemService {
     List<ItemDto> getAllItems(Long ownerId);
 
     List<ItemDto> searchItems(String searchStr);
+
+    void deleteItem(Long id, Long ownerId);
 }

@@ -5,20 +5,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.exceptions.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.item.storage.ItemStorage;
+import ru.practicum.shareit.item.storage.ItemStorageImpl;
 import ru.practicum.shareit.user.storage.UserStorage;
 
 import java.util.List;
 
 @Service
 @Slf4j
-public class ItemServiceImpl implements ItemService {
-    private final ItemStorage storage;
+public class ItemServiceImpl implements BaseItemService {
+    private final ItemStorageImpl storage;
     private final UserStorage userStorage;
 
     @Autowired
-    public ItemServiceImpl(ItemStorage storage, UserStorage userStorage) {
+    public ItemServiceImpl(ItemStorageImpl storage, UserStorage userStorage) {
         this.storage = storage;
         this.userStorage = userStorage;
     }
@@ -59,13 +58,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public void deleteItem(Long id, Long ownerId) {
-        Item item = storage.deleteItem(id, ownerId);
-
-        if (item == null) {
-            String errorMessage = String.format("Вещь с id=%d и ownerId=%d не найдена", id, ownerId);
-            log.error(errorMessage);
-            throw new NotFoundException(errorMessage);
-        }
+        storage.deleteItem(id, ownerId);
         log.info(String.format("Удааление вещи с id=%d", id));
     }
 
@@ -82,7 +75,6 @@ public class ItemServiceImpl implements ItemService {
     private void validateIfNoUser(Long id) {
         boolean isAnyUser = userStorage.getAllUsers().stream()
                 .anyMatch(userDto -> userDto.getId().equals(id));
-        System.out.println("IS ANY USER " + isAnyUser);
         if (!isAnyUser) {
             String errorMessage = String.format("Пользователь с id=%d не существует", id);
             log.error(errorMessage);

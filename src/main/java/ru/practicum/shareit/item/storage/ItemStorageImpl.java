@@ -3,19 +3,18 @@ package ru.practicum.shareit.item.storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.exception.exceptions.ForbiddenException;
+import ru.practicum.shareit.exception.exceptions.NotFoundException;
+import ru.practicum.shareit.item.BaseItemService;
 import ru.practicum.shareit.item.dto.ItemDTOMapper;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 @Slf4j
-public class ItemStorageImpl implements ItemStorage {
+public class ItemStorageImpl implements BaseItemService {
     private final Map<Long, Item> items = new HashMap<>();
     private Long idCounter = 0L;
 
@@ -54,13 +53,16 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     @Override
-    public Item deleteItem(Long id, Long ownerId) {
+    public void deleteItem(Long id, Long ownerId) {
         Item item = items.get(id);
 
         validateAccess(item, ownerId);
-
+        if (item == null) {
+            String errorMessage = String.format("Вещь с id=%d, ownerId=%d не найдена", id, ownerId);
+            log.error(errorMessage);
+            throw new NotFoundException(errorMessage);
+        }
         items.remove(id);
-        return item;
     }
 
     @Override
@@ -87,7 +89,7 @@ public class ItemStorageImpl implements ItemStorage {
     }
 
     private void validateAccess(Item item, Long ownerId) {
-        if (item != null && !item.getOwnerId().equals(ownerId)) {
+        if (item != null && !Objects.equals(item.getOwnerId(), ownerId)) {
             String errorMessage = String.format("У пользователя с id=%d нет доступа к записи c id=%d",
                     ownerId, item.getId());
             log.error(errorMessage);

@@ -7,16 +7,13 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import javax.validation.Valid;
 import java.util.List;
 
-/**
- * TODO Sprint add-controllers.
- */
 @RestController
 @RequestMapping("/items")
 public class ItemController {
-    private final ItemService service;
+    private final ItemServiceImpl service;
 
     @Autowired
-    public ItemController(ItemService service) {
+    public ItemController(ItemServiceImpl service) {
         this.service = service;
     }
 
