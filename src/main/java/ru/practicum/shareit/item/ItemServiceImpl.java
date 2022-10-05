@@ -73,8 +73,8 @@ public class ItemServiceImpl implements ItemService {
                     throw new NotFoundException(errorMessage);
                 });
 
-        boolean isNoPastBookings = bookingRepository.
-                findAllBookingsOfItemAndOwner(itemId, userId, LocalDateTime.now()).isEmpty();
+        boolean isNoPastBookings = bookingRepository
+                .findAllBookingsOfItemAndOwner(itemId, userId, LocalDateTime.now()).isEmpty();
 
         if (isNoPastBookings) {
             throw new BadRequestException("Пользователь не может оставить отзыв к вещи, которую не бронировал");
