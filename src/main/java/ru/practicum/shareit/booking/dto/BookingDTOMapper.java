@@ -1,15 +1,66 @@
 package ru.practicum.shareit.booking.dto;
 
+import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.model.User;
 
 public abstract class BookingDTOMapper {
-    public BookingDto toBookingDto(Booking booking) {
+    public static BookingDto toBookingDto(Booking booking) {
         return new BookingDto(
                 booking.getId(),
-                booking.getItemId(),
-                booking.getStartDate(),
-                booking.getEndDate(),
+                booking.getItem(),
+                booking.getStart(),
+                booking.getEnd(),
+                booking.getBooker(),
                 booking.getStatus()
         );
+    }
+
+    public static Booking fromBookingDto(BookingDto booking, User booker, Item item, BookingStatus status) {
+        return new Booking(
+                booking.getId(),
+                item,
+                booker,
+                booking.getStart(),
+                booking.getEnd(),
+                status
+        );
+    }
+
+    public static CreateBookingDto toCreateBookingDto(Booking booking) {
+        return new CreateBookingDto(
+                booking.getId(),
+                booking.getItem().getId(),
+                booking.getStart(),
+                booking.getEnd()
+        );
+    }
+
+    public static Booking fromCreateBookingDto(CreateBookingDto booking, User booker, Item item, BookingStatus status) {
+        return new Booking(
+                booking.getId(),
+                item,
+                booker,
+                booking.getStart(),
+                booking.getEnd(),
+                status
+        );
+    }
+
+    public static ConfirmedBookingDto toConfirmedBookingDto(Booking booking) {
+        return new ConfirmedBookingDto(
+                booking.getId(),
+                booking.getStatus(),
+                booking.getBooker(),
+                booking.getItem()
+        );
+    }
+
+    public static BookingItemDto toBookingItemDto(Booking booking) {
+        if (booking == null) {
+            return null;
+        }
+        return new BookingItemDto(booking.getId(), booking.getBooker().getId());
     }
 }
