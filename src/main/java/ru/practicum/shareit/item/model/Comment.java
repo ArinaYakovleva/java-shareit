@@ -1,12 +1,10 @@
-package ru.practicum.shareit.booking.model;
+package ru.practicum.shareit.item.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.hibernate.Hibernate;
-import ru.practicum.shareit.booking.BookingStatus;
-import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
@@ -17,36 +15,33 @@ import java.util.Objects;
 @Setter
 @RequiredArgsConstructor
 @AllArgsConstructor
-@Table(name = "bookings")
+@Table(name = "comments")
 @Entity
-public class Booking {
+public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 10000)
+    private String text;
+
     @ManyToOne
-    @JoinColumn(name = "item_id", nullable = false)
+    @JoinColumn(name = "item_id")
     private Item item;
 
     @ManyToOne
-    @JoinColumn(name = "booker_id", nullable = false)
-    private User booker;
+    @JoinColumn(name = "author_id")
+    private User author;
 
-    @Column(name = "start_date", nullable = false)
-    private LocalDateTime start;
-
-    @Column(name = "end_date", nullable = false)
-    private LocalDateTime end;
-
-    @Enumerated(EnumType.STRING)
-    private BookingStatus status;
+    @Column(name = "created_date")
+    private LocalDateTime created;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Booking booking = (Booking) o;
-        return id != null && Objects.equals(id, booking.id);
+        Comment comment = (Comment) o;
+        return id != null && Objects.equals(id, comment.id);
     }
 
     @Override
