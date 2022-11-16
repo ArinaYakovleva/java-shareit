@@ -120,18 +120,12 @@ public class ItemServiceImpl implements ItemService {
             log.error(errorMessage);
             throw new ForbiddenException(errorMessage);
         }
-        User owner = userRepository.findById(existingItem.getOwner().getId())
-                .orElseThrow(() -> {
-                    String errorMessage = String.format("Пользователь с id=%d не найден", id);
-                    log.error(errorMessage);
-                    throw new NotFoundException(errorMessage);
-                });
 
         Item itemToUpdate = new Item(
                 id,
                 item.getName() == null ? existingItem.getName() : item.getName(),
                 item.getDescription() == null ? existingItem.getDescription() : item.getDescription(),
-                owner,
+                existingItem.getOwner(),
                 item.getAvailable() == null ? existingItem.getAvailable() : item.getAvailable(),
                 existingItem.getRequest()
         );

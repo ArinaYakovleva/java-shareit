@@ -161,11 +161,11 @@ class BookingControllerTest {
         LocalDateTime start = LocalDateTime.of(2022, 12, 30, 14, 30);
         LocalDateTime end = LocalDateTime.of(2023, 1, 1, 14, 30);
 
-        CreateBookingDto createBookingDto = new CreateBookingDto(5L, 2L, start, end);
+        CreateBookingDto createBookingDto = new CreateBookingDto(5L, 5L, start, end);
 
         mockMvc.perform(post("/bookings")
                         .content(objectMapper.writeValueAsString(createBookingDto))
-                        .header("X-Sharer-User-Id", 2)
+                        .header("X-Sharer-User-Id", 1)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
@@ -218,8 +218,8 @@ class BookingControllerTest {
 
     @Test
     void addBookingToUnavailableItem() throws Exception {
-        LocalDateTime start = LocalDateTime.of(2022, 10, 30, 14, 30);
-        LocalDateTime end = LocalDateTime.of(2022, 10, 30, 15, 30);
+        LocalDateTime start = LocalDateTime.of(2022, 12, 30, 14, 30);
+        LocalDateTime end = LocalDateTime.of(2022, 12, 30, 15, 30);
 
         CreateBookingDto createBookingDto = new CreateBookingDto(4L, 3L, start, end);
 
@@ -233,8 +233,8 @@ class BookingControllerTest {
 
     @Test
     void addBookingByOwner() throws Exception {
-        LocalDateTime start = LocalDateTime.of(2022, 10, 30, 14, 30);
-        LocalDateTime end = LocalDateTime.of(2022, 10, 30, 15, 30);
+        LocalDateTime start = LocalDateTime.of(2022, 12, 30, 14, 30);
+        LocalDateTime end = LocalDateTime.of(2022, 12, 30, 15, 30);
 
         CreateBookingDto createBookingDto = new CreateBookingDto(4L, 2L, start, end);
 
@@ -243,7 +243,7 @@ class BookingControllerTest {
                         .header("X-Sharer-User-Id", 2)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -442,6 +442,14 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$[0].item.id", is(1)))
                 .andExpect(jsonPath("$[0].start", is("2022-12-23T12:00:00")))
                 .andExpect(jsonPath("$[0].end", is("2022-12-24T12:00:00")));
+
+        //BY BOOKER
+        mockMvc.perform(get("/bookings?state=REJECTED&from=0&size=10")
+                        .header("X-Sharer-User-Id", 1)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test

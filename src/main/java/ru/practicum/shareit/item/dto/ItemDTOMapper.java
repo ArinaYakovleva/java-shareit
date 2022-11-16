@@ -11,10 +11,6 @@ import java.util.List;
 
 public abstract class ItemDTOMapper {
     public static ItemDto toItemDto(Item item) {
-        if (item == null) {
-            return null;
-        }
-
         return new ItemDto(item.getId(),
                 item.getName(),
                 item.getDescription(),

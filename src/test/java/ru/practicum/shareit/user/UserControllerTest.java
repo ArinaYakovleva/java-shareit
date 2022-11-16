@@ -13,6 +13,7 @@ import ru.practicum.shareit.user.dto.UserDto;
 
 import java.nio.charset.StandardCharsets;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -57,7 +58,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(userToCreate))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -67,7 +68,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(userToCreate))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400));
+                .andExpect(status().isBadRequest());
 
     }
 
@@ -78,7 +79,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(userToCreate))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(500));
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -101,7 +102,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(userToUpdate))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(404));
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -111,7 +112,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(userToUpdate))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(500));
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -127,10 +128,10 @@ class UserControllerTest {
 
     @Test
     void getNotFoundUser() throws Exception {
-        mockMvc.perform(get("/users")
+        mockMvc.perform(get("/users/3")
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(200));
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -140,6 +141,19 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].id", is(user.getId()), Long.class))
                 .andExpect(jsonPath("$[1].id", is(secondUser.getId()), Long.class));
+    }
+
+    @Test
+    void deleteUser() throws Exception {
+        mockMvc.perform(delete("/users/1")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/users")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(1)));
     }
 
     private void performPost(UserDto userDto) throws Exception {

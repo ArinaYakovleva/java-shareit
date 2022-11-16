@@ -208,7 +208,21 @@ class ItemControllerTest {
                         .header("X-Sharer-User-Id", 2)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400));
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void addItemWithoutHeader() throws Exception {
+        ItemDto itemDto = new ItemDto(3L,
+                "test",
+                "test description",
+                true,
+                null);
+        mockMvc.perform(post("/items")
+                        .content(objectMapper.writeValueAsString(itemDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -223,7 +237,7 @@ class ItemControllerTest {
                         .header("X-Sharer-User-Id", 2)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -238,9 +252,38 @@ class ItemControllerTest {
                         .header("X-Sharer-User-Id", 2)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(400));
+                .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void addItemWrongUser() throws Exception {
+        ItemDto itemDto = new ItemDto(3L,
+                "test name",
+                "test description",
+                true,
+                null);
+        mockMvc.perform(post("/items")
+                        .content(objectMapper.writeValueAsString(itemDto))
+                        .header("X-Sharer-User-Id", 10)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void addItemUnknownRequest() throws Exception {
+        ItemDto itemDto = new ItemDto(3L,
+                "test name",
+                "test description",
+                true,
+                1L);
+        mockMvc.perform(post("/items")
+                        .content(objectMapper.writeValueAsString(itemDto))
+                        .header("X-Sharer-User-Id", 1)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
     @Test
     void addComment() throws Exception {
         CommentDto comment = new CommentDto(2L, "супер отвертка", "Ivan",
@@ -285,6 +328,17 @@ class ItemControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void addCommentWrongUser() throws Exception {
+        CommentDto comment = new CommentDto(2L, "test", "test",
+                LocalDateTime.of(2022, 10, 24, 16, 0));
+        mockMvc.perform(post("/items/1/comment")
+                        .content(objectMapper.writeValueAsString(comment))
+                        .header("X-Sharer-User-Id", 10)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
     @Test
     void editItem() throws Exception {
         ItemDto itemDto = new ItemDto(2L,
