@@ -284,6 +284,7 @@ class ItemControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
+
     @Test
     void addComment() throws Exception {
         CommentDto comment = new CommentDto(2L, "супер отвертка", "Ivan",
@@ -339,6 +340,7 @@ class ItemControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
+
     @Test
     void editItem() throws Exception {
         ItemDto itemDto = new ItemDto(2L,
