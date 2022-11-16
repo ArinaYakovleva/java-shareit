@@ -7,21 +7,26 @@ import ru.practicum.shareit.item.dto.ItemBookingDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
 @RequestMapping("/items")
 public class ItemController {
-    private final ItemServiceImpl service;
+    private final ItemService service;
 
     @Autowired
-    public ItemController(ItemServiceImpl service) {
+    public ItemController(ItemService service) {
         this.service = service;
     }
 
     @GetMapping
-    public List<ItemBookingDto> getAllItems(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        return service.getAllItems(ownerId);
+    public List<ItemBookingDto> getAllItems(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+                                            @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                            @Positive @RequestParam(name = "size", defaultValue = "10") Integer size
+    ) {
+        return service.getAllItems(ownerId, from, size);
     }
 
     @GetMapping("/{id}")
@@ -30,8 +35,10 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam(required = false) String text) {
-        return service.searchItems(text);
+    public List<ItemDto> searchItems(@RequestParam(required = false) String text,
+                                     @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                     @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
+        return service.searchItems(text, from, size);
     }
 
     @PostMapping

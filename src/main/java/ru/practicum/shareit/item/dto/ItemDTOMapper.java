@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.dto;
 import ru.practicum.shareit.booking.dto.BookingItemDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.model.Request;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
@@ -17,17 +18,18 @@ public abstract class ItemDTOMapper {
         return new ItemDto(item.getId(),
                 item.getName(),
                 item.getDescription(),
-                item.getAvailable());
+                item.getAvailable(),
+                item.getRequest() != null ? item.getRequest().getId() : null);
     }
 
-    public static Item fromItemDto(ItemDto itemDto, User owner) {
+    public static Item fromItemDto(ItemDto itemDto, User owner, Request request) {
         return new Item(
                 itemDto.getId(),
                 itemDto.getName(),
                 itemDto.getDescription(),
                 owner,
                 itemDto.getAvailable(),
-                null
+                request
         );
     }
 

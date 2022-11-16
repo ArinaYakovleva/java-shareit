@@ -18,4 +18,6 @@ public class ItemDto {
 
     @NotNull(message = "Доступность не должна равняться null")
     private final Boolean available;
+
+    private final Long requestId;
 }

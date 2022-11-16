@@ -1,68 +1,57 @@
-package ru.practicum.shareit.item.model;
+package ru.practicum.shareit.request.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.hibernate.Hibernate;
-import ru.practicum.shareit.request.model.Request;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Objects;
-
 
 @Getter
 @Setter
 @RequiredArgsConstructor
 @AllArgsConstructor
-@Table(name = "items")
+@Table(name = "requests")
 @Entity
-public class Item {
+public class Request {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
-    private String name;
 
     @Column(nullable = false, length = 10000)
     private String description;
 
     @ManyToOne
-    @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
+    @JoinColumn(name = "requestor_id")
+    private User requestor;
 
-    @Column(nullable = false)
-    private Boolean available;
-
-    @ManyToOne
-    @JoinColumn(name = "request_id")
-    private Request request;
+    private LocalDateTime created;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Item item = (Item) o;
-        return id != null && Objects.equals(id, item.id);
+        Request request = (Request) o;
+        return id != null && Objects.equals(id, request.id);
     }
-
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return Objects.hash(id, description, requestor, created);
     }
 
     @Override
     public String toString() {
-        return "Item{" +
+        return "Request{" +
                 "id=" + id +
-                ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
-                ", owner=" + owner +
-                ", available=" + available +
-                ", request=" + request +
+                ", requestor=" + requestor +
+                ", created=" + created +
                 '}';
     }
+
 }

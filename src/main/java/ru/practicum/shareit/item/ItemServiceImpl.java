@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingDTOMapper;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.common.CustomPageRequest;
 import ru.practicum.shareit.exception.exceptions.BadRequestException;
 import ru.practicum.shareit.exception.exceptions.ForbiddenException;
 import ru.practicum.shareit.exception.exceptions.NotFoundException;
@@ -15,6 +16,8 @@ import ru.practicum.shareit.item.dto.ItemDTOMapper;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.RequestRepository;
+import ru.practicum.shareit.request.model.Request;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
@@ -31,16 +34,19 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
     private static final String errorNotFound = "Вещь с id=%d не найдена";
+    private final RequestRepository requestRepository;
 
     @Autowired
     public ItemServiceImpl(ItemRepository repository,
                            UserRepository userRepository,
                            BookingRepository bookingRepository,
-                           CommentRepository commentRepository) {
+                           CommentRepository commentRepository,
+                           RequestRepository requestRepository) {
         this.repository = repository;
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
         this.commentRepository = commentRepository;
+        this.requestRepository = requestRepository;
     }
 
     @Override
@@ -51,7 +57,20 @@ public class ItemServiceImpl implements ItemService {
                     log.error(errorMessage);
                     throw new NotFoundException(errorMessage);
                 });
-        Item item = repository.saveAndFlush(ItemDTOMapper.fromItemDto(itemDto, owner));
+        Request request = null;
+        log.info(itemDto.toString());
+        if (itemDto.getRequestId() != null) {
+            request = requestRepository.findById(itemDto.getRequestId())
+                    .orElseThrow(() -> {
+                        String errorMessage = String.format("Запрос с id=%d не найден", itemDto.getRequestId());
+                        log.error(errorMessage);
+                        throw new NotFoundException(errorMessage);
+                    });
+            if (request != null) {
+                log.info(request.toString());
+            }
+        }
+        Item item = repository.saveAndFlush(ItemDTOMapper.fromItemDto(itemDto, owner, request));
         log.info(String.format("Добавление вещи: %s", item));
         return ItemDTOMapper.toItemDto(item);
     }
@@ -114,7 +133,7 @@ public class ItemServiceImpl implements ItemService {
                 item.getDescription() == null ? existingItem.getDescription() : item.getDescription(),
                 owner,
                 item.getAvailable() == null ? existingItem.getAvailable() : item.getAvailable(),
-                existingItem.getRequestId()
+                existingItem.getRequest()
         );
 
         log.info(String.format("Изменение вещи с id=%d", id));
@@ -146,7 +165,7 @@ public class ItemServiceImpl implements ItemService {
             String errorMessage = String.format("У пользователя с id=%d нет права на удаление" +
                     " вещи с id=%d", ownerId, id);
             log.error(errorMessage);
-            throw new NotFoundException(errorMessage);
+            throw new ForbiddenException(errorMessage);
         }
 
         log.info(String.format("Удааление вещи с id=%d", id));
@@ -154,23 +173,25 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemBookingDto> getAllItems(Long ownerId) {
-        return repository.findAllByOwner_Id(ownerId).stream()
+    public List<ItemBookingDto> getAllItems(Long ownerId, Integer from, Integer size) {
+        CustomPageRequest pageRequest = new CustomPageRequest(from, size);
+        return repository.findAllByOwner_Id(ownerId, pageRequest).stream()
                 .map(item -> makeItemBooking(item, ownerId))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<ItemDto> searchItems(String searchStr) {
+    public List<ItemDto> searchItems(String searchStr, Integer from, Integer to) {
+        CustomPageRequest pageRequest = new CustomPageRequest(from, to);
         if (searchStr == null || searchStr.isEmpty()) return new ArrayList<>();
-        return repository.search(searchStr).stream()
+        return repository.search(searchStr, pageRequest).stream()
                 .map(ItemDTOMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
     private ItemBookingDto makeItemBooking(Item item, Long userId) {
         List<Booking> itemBookings = bookingRepository.findAllByItem_Id(item.getId());
-
+        log.info("BOOKINGS " + itemBookings);
         List<CommentDto> comments = commentRepository.findAllByItem_Id(item.getId()).stream()
                 .map(ItemDTOMapper::toCommentDto)
                 .collect(Collectors.toList());
