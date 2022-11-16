@@ -65,7 +65,10 @@ class BookingJsonTest {
 
     @Test
     void testConfirmedBookingDto() throws Exception {
-        ConfirmedBookingDto confirmedBookingDto = new ConfirmedBookingDto(1L, BookingStatus.APPROVED, user, item);
+        LocalDateTime start = LocalDateTime.of(2022, 12, 22, 22, 0);
+        LocalDateTime end = LocalDateTime.of(2022, 12, 23, 22, 0);
+        ConfirmedBookingDto confirmedBookingDto = new ConfirmedBookingDto(1L,
+                BookingStatus.APPROVED, user, item, start, end);
 
         JsonContent<ConfirmedBookingDto> result = confirmedBookingDtoJson.write(confirmedBookingDto);
 

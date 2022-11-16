@@ -29,7 +29,12 @@ class BookingServiceImplTest {
             LocalDateTime.of(2022, 12, 12, 13, 0),
             LocalDateTime.of(2022, 12, 13, 13, 0));
 
-    ConfirmedBookingDto confirmedBookingDto = new ConfirmedBookingDto(1L, BookingStatus.APPROVED, user, item);
+    ConfirmedBookingDto confirmedBookingDto = new ConfirmedBookingDto(1L,
+            BookingStatus.APPROVED,
+            user,
+            item,
+            LocalDateTime.of(2022, 12, 12, 13, 0),
+            LocalDateTime.of(2022, 12, 13, 13, 0));
 
     BookingDto bookingDto = new BookingDto(1L, item,
             LocalDateTime.of(2022, 12, 12, 13, 0),
@@ -42,10 +47,10 @@ class BookingServiceImplTest {
     @Test
     void addBooking() {
         Mockito.when(bookingService.addBooking(createBookingDto, 1L))
-                .thenReturn(createBookingDto);
-        CreateBookingDto createdBooking = bookingService.addBooking(createBookingDto, 1L);
+                .thenReturn(bookingDto);
+        BookingDto bookingDto1 = bookingService.addBooking(createBookingDto, 1L);
 
-        assertEquals(createBookingDto, createdBooking);
+        assertEquals(bookingDto, bookingDto1);
         Mockito.verify(bookingService, Mockito.times(1)).addBooking(createBookingDto, 1L);
     }
 

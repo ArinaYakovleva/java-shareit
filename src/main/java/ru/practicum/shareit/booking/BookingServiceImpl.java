@@ -37,7 +37,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public CreateBookingDto addBooking(CreateBookingDto bookingDto, Long bookerId) {
+    public BookingDto addBooking(CreateBookingDto bookingDto, Long bookerId) {
         User user = userRepository.findById(bookerId)
                 .orElseThrow(() -> {
                     String errorMessage = String.format("Пользователь с id=%d не найден", bookerId);
@@ -69,7 +69,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = repository.saveAndFlush(BookingDTOMapper
                 .fromCreateBookingDto(bookingDto, user, item, BookingStatus.WAITING));
         log.info(String.format("Добавление бронирование: %s", booking));
-        return BookingDTOMapper.toCreateBookingDto(booking);
+        return BookingDTOMapper.toBookingDto(booking);
     }
 
     @Override

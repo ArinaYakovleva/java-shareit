@@ -17,15 +17,6 @@ public abstract class BookingDTOMapper {
         );
     }
 
-    public static CreateBookingDto toCreateBookingDto(Booking booking) {
-        return new CreateBookingDto(
-                booking.getId(),
-                booking.getItem().getId(),
-                booking.getStart(),
-                booking.getEnd()
-        );
-    }
-
     public static Booking fromCreateBookingDto(CreateBookingDto booking, User booker, Item item, BookingStatus status) {
         return new Booking(
                 booking.getId(),
@@ -42,7 +33,9 @@ public abstract class BookingDTOMapper {
                 booking.getId(),
                 booking.getStatus(),
                 booking.getBooker(),
-                booking.getItem()
+                booking.getItem(),
+                booking.getStart(),
+                booking.getEnd()
         );
     }
 

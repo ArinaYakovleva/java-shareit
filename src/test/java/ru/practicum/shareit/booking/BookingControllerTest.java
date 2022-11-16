@@ -136,7 +136,7 @@ class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(createBookingDto.getId()), Long.class))
-                .andExpect(jsonPath("$.itemId", is(createBookingDto.getItemId()), Long.class))
+                .andExpect(jsonPath("$.item.id", is(createBookingDto.getItemId()), Long.class))
                 .andExpect(jsonPath("$.start", is("2022-12-27T14:30:00")))
                 .andExpect(jsonPath("$.end", is("2022-12-28T14:30:00")));
     }
