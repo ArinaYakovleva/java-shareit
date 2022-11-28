@@ -1,11 +1,12 @@
 package ru.practicum.shareit.item;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingDTOMapper;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.common.CustomPageRequest;
 import ru.practicum.shareit.exception.exceptions.BadRequestException;
 import ru.practicum.shareit.exception.exceptions.ForbiddenException;
 import ru.practicum.shareit.exception.exceptions.NotFoundException;
@@ -15,6 +16,8 @@ import ru.practicum.shareit.item.dto.ItemDTOMapper;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.RequestRepository;
+import ru.practicum.shareit.request.model.Request;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
@@ -24,24 +27,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository repository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
-    private static final String errorNotFound = "Вещь с id=%d не найдена";
-
-    @Autowired
-    public ItemServiceImpl(ItemRepository repository,
-                           UserRepository userRepository,
-                           BookingRepository bookingRepository,
-                           CommentRepository commentRepository) {
-        this.repository = repository;
-        this.userRepository = userRepository;
-        this.bookingRepository = bookingRepository;
-        this.commentRepository = commentRepository;
-    }
+    private static final String ERROR_NOT_FOUND = "Вещь с id=%d не найдена";
+    private final RequestRepository requestRepository;
 
     @Override
     public ItemDto addItem(ItemDto itemDto, Long ownerId) {
@@ -51,7 +45,20 @@ public class ItemServiceImpl implements ItemService {
                     log.error(errorMessage);
                     throw new NotFoundException(errorMessage);
                 });
-        Item item = repository.saveAndFlush(ItemDTOMapper.fromItemDto(itemDto, owner));
+        Request request = null;
+        log.info(itemDto.toString());
+        if (itemDto.getRequestId() != null) {
+            request = requestRepository.findById(itemDto.getRequestId())
+                    .orElseThrow(() -> {
+                        String errorMessage = String.format("Запрос с id=%d не найден", itemDto.getRequestId());
+                        log.error(errorMessage);
+                        throw new NotFoundException(errorMessage);
+                    });
+            if (request != null) {
+                log.info(String.format("Найден запрос для вещи с id=%d: %s", itemDto.getId(), request));
+            }
+        }
+        Item item = repository.saveAndFlush(ItemDTOMapper.fromItemDto(itemDto, owner, request));
         log.info(String.format("Добавление вещи: %s", item));
         return ItemDTOMapper.toItemDto(item);
     }
@@ -61,7 +68,7 @@ public class ItemServiceImpl implements ItemService {
         Item item = repository
                 .findById(itemId)
                 .orElseThrow(() -> {
-                    String errorMessage = String.format(errorNotFound, itemId);
+                    String errorMessage = String.format(ERROR_NOT_FOUND, itemId);
                     log.error(errorMessage);
                     throw new NotFoundException(errorMessage);
                 });
@@ -91,7 +98,7 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto editItem(Long id, ItemDto item, Long ownerId) {
         Item existingItem = repository.findById(id)
                 .orElseThrow(() -> {
-                    String errorMessage = String.format(errorNotFound, id);
+                    String errorMessage = String.format(ERROR_NOT_FOUND, id);
                     log.error(errorMessage);
                     throw new NotFoundException(errorMessage);
                 });
@@ -101,20 +108,14 @@ public class ItemServiceImpl implements ItemService {
             log.error(errorMessage);
             throw new ForbiddenException(errorMessage);
         }
-        User owner = userRepository.findById(existingItem.getOwner().getId())
-                .orElseThrow(() -> {
-                    String errorMessage = String.format("Пользователь с id=%d не найден", id);
-                    log.error(errorMessage);
-                    throw new NotFoundException(errorMessage);
-                });
 
         Item itemToUpdate = new Item(
                 id,
                 item.getName() == null ? existingItem.getName() : item.getName(),
                 item.getDescription() == null ? existingItem.getDescription() : item.getDescription(),
-                owner,
+                existingItem.getOwner(),
                 item.getAvailable() == null ? existingItem.getAvailable() : item.getAvailable(),
-                existingItem.getRequestId()
+                existingItem.getRequest()
         );
 
         log.info(String.format("Изменение вещи с id=%d", id));
@@ -126,7 +127,7 @@ public class ItemServiceImpl implements ItemService {
     public ItemBookingDto getItem(Long id, Long userId) {
         Item item = repository.findById(id)
                 .orElseThrow(() -> {
-                    String errorMessage = String.format(errorNotFound, id);
+                    String errorMessage = String.format(ERROR_NOT_FOUND, id);
                     log.error(errorMessage);
                     throw new NotFoundException(errorMessage);
                 });
@@ -137,7 +138,7 @@ public class ItemServiceImpl implements ItemService {
     public void deleteItem(Long id, Long ownerId) {
         Item item = repository.findById(id)
                 .orElseThrow(() -> {
-                    String errorMessage = String.format(errorNotFound, id);
+                    String errorMessage = String.format(ERROR_NOT_FOUND, id);
                     log.error(errorMessage);
                     throw new NotFoundException(errorMessage);
                 });
@@ -146,7 +147,7 @@ public class ItemServiceImpl implements ItemService {
             String errorMessage = String.format("У пользователя с id=%d нет права на удаление" +
                     " вещи с id=%d", ownerId, id);
             log.error(errorMessage);
-            throw new NotFoundException(errorMessage);
+            throw new ForbiddenException(errorMessage);
         }
 
         log.info(String.format("Удааление вещи с id=%d", id));
@@ -154,16 +155,18 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemBookingDto> getAllItems(Long ownerId) {
-        return repository.findAllByOwner_Id(ownerId).stream()
+    public List<ItemBookingDto> getAllItems(Long ownerId, Integer from, Integer size) {
+        CustomPageRequest pageRequest = new CustomPageRequest(from, size);
+        return repository.findAllByOwner_Id(ownerId, pageRequest).stream()
                 .map(item -> makeItemBooking(item, ownerId))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<ItemDto> searchItems(String searchStr) {
+    public List<ItemDto> searchItems(String searchStr, Integer from, Integer to) {
+        CustomPageRequest pageRequest = new CustomPageRequest(from, to);
         if (searchStr == null || searchStr.isEmpty()) return new ArrayList<>();
-        return repository.search(searchStr).stream()
+        return repository.search(searchStr, pageRequest).stream()
                 .map(ItemDTOMapper::toItemDto)
                 .collect(Collectors.toList());
     }

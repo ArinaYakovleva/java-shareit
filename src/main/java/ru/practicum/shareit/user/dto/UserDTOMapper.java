@@ -2,11 +2,8 @@ package ru.practicum.shareit.user.dto;
 
 import ru.practicum.shareit.user.model.User;
 
-public abstract class UserDTOMapper {
+public final class UserDTOMapper {
     public static UserDto toUserDto(User user) {
-        if (user == null) {
-            return null;
-        }
         return new UserDto(user.getId(), user.getName(), user.getEmail());
     }
 

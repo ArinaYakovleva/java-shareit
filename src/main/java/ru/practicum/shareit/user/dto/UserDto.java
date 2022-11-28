@@ -8,6 +8,8 @@ import javax.validation.constraints.NotNull;
 @Data
 public class UserDto {
     private final Long id;
+
+    @NotNull(message = "Имя не может равняться null")
     private final String name;
 
     @Email(message = "Некорректный email")
