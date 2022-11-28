@@ -238,6 +238,7 @@ class ItemServiceImplTest {
         assertEquals("Пользователь не может оставить отзыв к вещи, которую не бронировал",
                 badRequestException.getMessage());
     }
+
     @Test
     void editItem() {
         Mockito.when(itemRepository.findById(1L))
@@ -318,6 +319,7 @@ class ItemServiceImplTest {
 
         assertEquals("Вещь с id=1 не найдена", notFoundException.getMessage());
     }
+
     @Test
     void getAllItems() {
         CustomPageRequest pageRequest = new CustomPageRequest(0, 10);

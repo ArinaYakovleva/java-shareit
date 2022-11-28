@@ -75,6 +75,7 @@ class UserServiceImplTest {
 
         assertEquals("Пользователь с id=2 не найден", notFoundException.getMessage());
     }
+
     @Test
     void getUser() {
         Mockito.when(userRepository.findById(1L))

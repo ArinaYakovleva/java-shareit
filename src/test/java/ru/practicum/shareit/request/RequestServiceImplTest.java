@@ -101,6 +101,7 @@ class RequestServiceImplTest {
 
         assertEquals("Пользователь с id=2 не найден", notFoundException.getMessage());
     }
+
     @Test
     void getAllRequests() {
         CustomPageRequest pageRequest = new CustomPageRequest(0, 10, Sort.by("created").descending());

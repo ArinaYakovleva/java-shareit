@@ -10,12 +10,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.booking.dto.CreateBookingDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.model.User;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,6 +29,7 @@ class ExceptionHandlerControllerTest {
     private final UserDto user = new UserDto(1L, "test", "test@mail.com");
 
     private final ItemDto itemDto = new ItemDto(1L, "test", "test", true, null);
+
     @Test
     void handleNotFoundException() throws Exception {
         mockMvc.perform(get("/users/1000")

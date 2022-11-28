@@ -247,6 +247,7 @@ class BookingServiceImplTest {
 
         assertEquals("Владелец вещи не может бронировать свою вещь", notFoundException.getMessage());
     }
+
     @Test
     void confirmBooking() {
         Mockito.when(bookingRepository.findById(anyLong()))
@@ -297,6 +298,7 @@ class BookingServiceImplTest {
 
         assertEquals("Невозможно изменить статус одобренного бронирования с id=1", badRequestException.getMessage());
     }
+
     @Test
     void getBooking() {
         Mockito.when(bookingRepository.findById(1L))
@@ -332,6 +334,7 @@ class BookingServiceImplTest {
         Mockito.verify(bookingRepository, Mockito.times(1))
                 .findById(1L);
     }
+
     @Test
     void getAllBookingsByOwner() {
         CustomPageRequest pageRequest = new CustomPageRequest(0, 10);
