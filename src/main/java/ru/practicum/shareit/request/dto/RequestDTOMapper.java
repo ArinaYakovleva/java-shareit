@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class RequestDTOMapper {
+public final class RequestDTOMapper {
     public static RequestDto toRequestDto(Request request, List<Item> items) {
         return new RequestDto(
                 request.getId(),

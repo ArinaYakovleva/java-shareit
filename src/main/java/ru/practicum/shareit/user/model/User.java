@@ -10,7 +10,6 @@ import javax.persistence.*;
 import java.util.Objects;
 
 @Getter
-@Setter
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")

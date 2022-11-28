@@ -1,7 +1,7 @@
 package ru.practicum.shareit.item;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingDTOMapper;
@@ -27,27 +27,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository repository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
-    private static final String errorNotFound = "Вещь с id=%d не найдена";
+    private static final String ERROR_NOT_FOUND = "Вещь с id=%d не найдена";
     private final RequestRepository requestRepository;
-
-    @Autowired
-    public ItemServiceImpl(ItemRepository repository,
-                           UserRepository userRepository,
-                           BookingRepository bookingRepository,
-                           CommentRepository commentRepository,
-                           RequestRepository requestRepository) {
-        this.repository = repository;
-        this.userRepository = userRepository;
-        this.bookingRepository = bookingRepository;
-        this.commentRepository = commentRepository;
-        this.requestRepository = requestRepository;
-    }
 
     @Override
     public ItemDto addItem(ItemDto itemDto, Long ownerId) {
@@ -67,7 +55,7 @@ public class ItemServiceImpl implements ItemService {
                         throw new NotFoundException(errorMessage);
                     });
             if (request != null) {
-                log.info(request.toString());
+                log.info(String.format("Найден запрос для вещи с id=%d: %s", itemDto.getId(), request));
             }
         }
         Item item = repository.saveAndFlush(ItemDTOMapper.fromItemDto(itemDto, owner, request));
@@ -80,7 +68,7 @@ public class ItemServiceImpl implements ItemService {
         Item item = repository
                 .findById(itemId)
                 .orElseThrow(() -> {
-                    String errorMessage = String.format(errorNotFound, itemId);
+                    String errorMessage = String.format(ERROR_NOT_FOUND, itemId);
                     log.error(errorMessage);
                     throw new NotFoundException(errorMessage);
                 });
@@ -110,7 +98,7 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto editItem(Long id, ItemDto item, Long ownerId) {
         Item existingItem = repository.findById(id)
                 .orElseThrow(() -> {
-                    String errorMessage = String.format(errorNotFound, id);
+                    String errorMessage = String.format(ERROR_NOT_FOUND, id);
                     log.error(errorMessage);
                     throw new NotFoundException(errorMessage);
                 });
@@ -139,7 +127,7 @@ public class ItemServiceImpl implements ItemService {
     public ItemBookingDto getItem(Long id, Long userId) {
         Item item = repository.findById(id)
                 .orElseThrow(() -> {
-                    String errorMessage = String.format(errorNotFound, id);
+                    String errorMessage = String.format(ERROR_NOT_FOUND, id);
                     log.error(errorMessage);
                     throw new NotFoundException(errorMessage);
                 });
@@ -150,7 +138,7 @@ public class ItemServiceImpl implements ItemService {
     public void deleteItem(Long id, Long ownerId) {
         Item item = repository.findById(id)
                 .orElseThrow(() -> {
-                    String errorMessage = String.format(errorNotFound, id);
+                    String errorMessage = String.format(ERROR_NOT_FOUND, id);
                     log.error(errorMessage);
                     throw new NotFoundException(errorMessage);
                 });
@@ -185,7 +173,7 @@ public class ItemServiceImpl implements ItemService {
 
     private ItemBookingDto makeItemBooking(Item item, Long userId) {
         List<Booking> itemBookings = bookingRepository.findAllByItem_Id(item.getId());
-        log.info("BOOKINGS " + itemBookings);
+
         List<CommentDto> comments = commentRepository.findAllByItem_Id(item.getId()).stream()
                 .map(ItemDTOMapper::toCommentDto)
                 .collect(Collectors.toList());

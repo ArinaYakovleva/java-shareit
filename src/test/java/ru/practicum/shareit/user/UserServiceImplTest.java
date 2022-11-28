@@ -1,110 +1,128 @@
 package ru.practicum.shareit.user;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.practicum.shareit.exception.exceptions.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.model.User;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
+    @InjectMocks
+    private UserServiceImpl userService;
+
     @Mock
-    UserService userService;
-    UserDto user;
-    UserDto userWithId;
+    private UserRepository userRepository;
 
-    @BeforeEach
-    public void init() {
-        user = new UserDto(
-                null,
-                "test user",
-                "test@mail.com"
-        );
+    private final User user = new User(
+            1L,
+            "test user",
+            "test@mail.com"
+    );
 
-        userWithId = new UserDto(
-                1L,
-                "new user",
-                "new@mail.ro"
-        );
-    }
+    private final UserDto userDto = new UserDto(
+            1L,
+            "test user",
+            "test@mail.com"
+    );
 
     @Test
     void addUser() {
-        UserDto testUser = new UserDto(
-                1L,
-                "test user",
-                "test@mail.com"
-        );
-        Mockito.when(userService.addUser(user))
-                .thenReturn(testUser);
+        Mockito.when(userRepository.saveAndFlush(user))
+                .thenReturn(user);
 
-        UserDto createdUser = userService.addUser(user);
-        assertEquals(testUser, createdUser);
-        Mockito.verify(userService, Mockito.times(1)).addUser(user);
+        UserDto createdUser = userService.addUser(userDto);
+        assertEquals(userDto, createdUser);
+        Mockito.verify(userRepository, Mockito.times(1))
+                .saveAndFlush(user);
 
     }
 
     @Test
     void editUser() {
-        Mockito.when(userService.editUser(any(UserDto.class), anyLong()))
-                .thenReturn(userWithId);
-        UserDto updatedUser = userService.editUser(userWithId, 1L);
+        User userToUpdate = new User(1L, "updated", "test@mail.ru");
+        UserDto userToUpdateDto = new UserDto(1L, "updated", "test@mail.ru");
 
-        assertEquals(userWithId, updatedUser);
-        Mockito.verify(userService, Mockito.times(1))
-                .editUser(userWithId, 1L);
+        Mockito.when(userRepository.findById(1L))
+                .thenReturn(Optional.of(user));
+        Mockito.when(userRepository.saveAndFlush(userToUpdate))
+                .thenReturn(userToUpdate);
+
+        UserDto updatedUser = userService.editUser(userToUpdateDto, 1L);
+
+        assertEquals(userToUpdateDto, updatedUser);
+        Mockito.verify(userRepository, Mockito.times(1))
+                .saveAndFlush(userToUpdate);
     }
 
     @Test
-    void getUser() {
-        Mockito.when(userService.getUser(1L))
-                .thenReturn(userWithId);
-        UserDto foundUser = userService.getUser(1L);
-        assertEquals(userWithId, foundUser);
+    void editNotFoundUser() {
+        Mockito.when(userRepository.findById(2L))
+                .thenReturn(Optional.empty());
 
-        Mockito.verify(userService, Mockito.times(1))
-                .getUser(1L);
+        NotFoundException notFoundException = assertThrows(NotFoundException.class,
+                () -> userService.editUser(userDto, 2L));
+
+        assertEquals("Пользователь с id=2 не найден", notFoundException.getMessage());
+    }
+    @Test
+    void getUser() {
+        Mockito.when(userRepository.findById(1L))
+                .thenReturn(Optional.of(user));
+
+        UserDto foundUser = userService.getUser(1L);
+        assertEquals(userDto, foundUser);
+
+        Mockito.verify(userRepository, Mockito.times(1))
+                .findById(1L);
+
+        Mockito.when(userRepository.findById(2L))
+                .thenThrow(new NotFoundException("Пользователь с id=2 не найден"));
+
+        NotFoundException notFoundException = assertThrows(NotFoundException.class,
+                () -> userService.getUser(2L));
+
+        assertEquals("Пользователь с id=2 не найден", notFoundException.getMessage());
+    }
+
+    @Test
+    void getNotFoundUser() {
+        Mockito.when(userRepository.findById(2L))
+                .thenReturn(Optional.empty());
+
+        NotFoundException notFoundException = assertThrows(NotFoundException.class,
+                () -> userService.getUser(2L));
+
+        assertEquals("Пользователь с id=2 не найден", notFoundException.getMessage());
     }
 
     @Test
     void getAllUsers() {
-        List<UserDto> users = getUsers();
-        Mockito.when(userService.getAllUsers())
-                .thenReturn(users);
+        Mockito.when(userRepository.findAll())
+                .thenReturn(List.of(user));
 
         List<UserDto> foundUsers = userService.getAllUsers();
-        assertEquals(3, foundUsers.size());
-        Mockito.verify(userService, Mockito.times(1))
-                .getAllUsers();
+        assertEquals(1, foundUsers.size());
+        assertEquals(userDto, foundUsers.get(0));
+        Mockito.verify(userRepository, Mockito.times(1))
+                .findAll();
 
     }
 
     @Test
     void deleteUser() {
         userService.deleteUser(1L);
-        Mockito.verify(userService, Mockito.times(1))
-                .deleteUser(1L);
-    }
-
-
-    private List<UserDto> getUsers() {
-        List<UserDto> userDtos = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            userDtos.add(new UserDto(
-                    (long) i + 1,
-                    "test",
-                    "test@mail.ru"
-            ));
-        }
-        return userDtos;
+        Mockito.verify(userRepository, Mockito.times(1))
+                .deleteById(1L);
     }
 }

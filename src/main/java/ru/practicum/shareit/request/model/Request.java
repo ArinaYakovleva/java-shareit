@@ -3,7 +3,6 @@ package ru.practicum.shareit.request.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.hibernate.Hibernate;
 import ru.practicum.shareit.user.model.User;
 
@@ -12,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Getter
-@Setter
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Table(name = "requests")

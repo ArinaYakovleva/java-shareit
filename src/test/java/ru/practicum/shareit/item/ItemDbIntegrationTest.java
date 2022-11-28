@@ -5,15 +5,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.common.CustomPageRequest;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDTOMapper;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.request.RequestRepository;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.dto.UserDTOMapper;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -27,23 +24,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @DataJpaTest
-@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ItemDbIntegrationTest {
     @Autowired
-    ItemRepository itemRepository;
+    private ItemRepository itemRepository;
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
-    BookingRepository bookingRepository;
-    @Autowired
-    CommentRepository commentRepository;
-    @Autowired
-    RequestRepository requestRepository;
-    ItemDto firstItem;
-    ItemDto secondItem;
-    User user;
-    User secondUser;
+    private CommentRepository commentRepository;
+    private ItemDto firstItem;
+    private ItemDto secondItem;
+    private User user;
+    private User secondUser;
 
     @BeforeEach
     void init() {

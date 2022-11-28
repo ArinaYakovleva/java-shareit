@@ -1,17 +1,19 @@
 package ru.practicum.shareit.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.shareit.exception.exceptions.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -19,148 +21,95 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@WebMvcTest(UserController.class)
 class UserControllerTest {
     @Autowired
-    MockMvc mockMvc;
+    private MockMvc mockMvc;
+
+    @MockBean
+    private UserService userService;
+
     @Autowired
-    ObjectMapper objectMapper;
-    UserDto user;
-    UserDto secondUser;
+    private ObjectMapper objectMapper;
 
-    @BeforeEach
-    void init() throws Exception {
-        user = new UserDto(1L, "test", "test@mail.ru");
-        secondUser = new UserDto(2L, "test 2", "test2@mail.ru");
-        performPost(user);
-        performPost(secondUser);
-    }
+    private final UserDto userDto = new UserDto(1L, "test", "test@mail.ru");
 
     @Test
-    void addUserOk() throws Exception {
-        UserDto userToCreate = new UserDto(3L, "new test", "new@mail.ru");
+    void addUser() throws Exception {
+        Mockito.when(userService.addUser(userDto))
+                .thenReturn(userDto);
+
         mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(userToCreate))
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .content(objectMapper.writeValueAsString(userDto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(userToCreate.getId()), Long.class))
-                .andExpect(jsonPath("$.name", is(userToCreate.getName())))
-                .andExpect(jsonPath("$.email", is(userToCreate.getEmail())));
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.name", is(userDto.getName())))
+                .andExpect(jsonPath("$.email", is(userDto.getEmail())));
     }
 
     @Test
-    void addUserNoName() throws Exception {
-        UserDto userToCreate = new UserDto(3L, null, "new@mail.ru");
-        mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(userToCreate))
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-    }
+    void getUserById() throws Exception {
+        Mockito.when(userService.getUser(1L))
+                .thenReturn(userDto);
 
-    @Test
-    void addUserNoEmail() throws Exception {
-        UserDto userToCreate = new UserDto(3L, "test", null);
-        mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(userToCreate))
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-
-    }
-
-    @Test
-    void addUserDuplicateEmail() throws Exception {
-        UserDto userToCreate = new UserDto(3L, "new user", "test@mail.ru");
-        mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(userToCreate))
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError());
-    }
-
-    @Test
-    void editUser() throws Exception {
-        UserDto userToUpdate = new UserDto(1L, "updated name", "updated@mail.com");
-        mockMvc.perform(patch("/users/1")
-                        .content(objectMapper.writeValueAsString(userToUpdate))
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(userToUpdate.getId()), Long.class))
-                .andExpect(jsonPath("$.name", is(userToUpdate.getName())))
-                .andExpect(jsonPath("$.email", is(userToUpdate.getEmail())));
-    }
-
-    @Test
-    void editUnknownUser() throws Exception {
-        UserDto userToUpdate = new UserDto(4L, "updated name", "updated@mail.com");
-        mockMvc.perform(patch("/users/4")
-                        .content(objectMapper.writeValueAsString(userToUpdate))
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void editWithDuplicateEmail() throws Exception {
-        UserDto userToUpdate = new UserDto(1L, "updated name", "test2@mail.ru");
-        mockMvc.perform(patch("/users/1")
-                        .content(objectMapper.writeValueAsString(userToUpdate))
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError());
-    }
-
-    @Test
-    void getUser() throws Exception {
         mockMvc.perform(get("/users/1")
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(user.getId()), Long.class))
-                .andExpect(jsonPath("$.name", is(user.getName())))
-                .andExpect(jsonPath("$.email", is(user.getEmail())));
-    }
-
-    @Test
-    void getNotFoundUser() throws Exception {
-        mockMvc.perform(get("/users/3")
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.name", is(userDto.getName())))
+                .andExpect(jsonPath("$.email", is(userDto.getEmail())));
     }
 
     @Test
     void getAllUsers() throws Exception {
+        Mockito.when(userService.getAllUsers())
+                .thenReturn(List.of(userDto));
+
         mockMvc.perform(get("/users")
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].id", is(user.getId()), Long.class))
-                .andExpect(jsonPath("$[1].id", is(secondUser.getId()), Long.class));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(1)))
+                .andExpect(jsonPath("$[0].name", is(userDto.getName())))
+                .andExpect(jsonPath("$[0].email", is(userDto.getEmail())));
     }
 
     @Test
     void deleteUser() throws Exception {
         mockMvc.perform(delete("/users/1")
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8))
                 .andExpect(status().isOk());
-
-        mockMvc.perform(get("/users")
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(1)));
     }
 
-    private void performPost(UserDto userDto) throws Exception {
-        mockMvc.perform(post("/users")
+    @Test
+    void testNotFoundException() throws Exception {
+        Mockito.when(userService.getUser(1L))
+                .thenThrow(new NotFoundException("Пользователь с id=1 не найден"));
+
+        mockMvc.perform(get("/users/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void editUser() throws Exception {
+        Mockito.when(userService.editUser(userDto, 1L))
+                .thenReturn(userDto);
+
+        mockMvc.perform(patch("/users/1")
                         .content(objectMapper.writeValueAsString(userDto))
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.name", is(userDto.getName())))
+                .andExpect(jsonPath("$.email", is(userDto.getEmail())));
     }
 }

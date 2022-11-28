@@ -9,10 +9,8 @@ import ru.practicum.shareit.request.model.Request;
 import java.util.List;
 
 public interface RequestRepository extends JpaRepository<Request, Long> {
-    List<Request> findAllByRequestor_Id(Long requestId, Sort sort);
+    List<Request> findAllByRequestor_Id(Long userId, Sort sort);
 
-    @Query("select r from Request r " +
-            "where r.requestor.id not in (?1)")
-    List<Request> findAllByOtherUsers(Long userId, Pageable pageable);
+    List<Request> findAllByRequestor_IdNot(Long userId, Pageable pageable);
 
 }

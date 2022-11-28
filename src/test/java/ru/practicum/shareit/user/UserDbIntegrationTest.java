@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.user.dto.UserDTOMapper;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
@@ -16,14 +15,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @DataJpaTest
-@Transactional
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class UserDbIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-    UserDto user;
-    UserDto secondUser;
+    private UserDto user;
+    private UserDto secondUser;
 
     @BeforeEach
     void init() {

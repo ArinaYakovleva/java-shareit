@@ -1,7 +1,7 @@
 package ru.practicum.shareit.booking;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDTOMapper;
@@ -23,18 +23,12 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
     private final BookingRepository repository;
     private final UserRepository userRepository;
 
     private final ItemRepository itemRepository;
-
-    @Autowired
-    public BookingServiceImpl(BookingRepository repository, UserRepository userRepository, ItemRepository itemRepository) {
-        this.repository = repository;
-        this.userRepository = userRepository;
-        this.itemRepository = itemRepository;
-    }
 
     @Override
     public BookingDto addBooking(CreateBookingDto bookingDto, Long bookerId) {
@@ -99,7 +93,6 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto getBooking(Long bookingId, Long userId) {
-
         Booking booking = repository.findById(bookingId)
                 .orElseThrow(() -> {
                     String errorMessage = String.format("Бронирование с id=%d не найдено", bookingId);

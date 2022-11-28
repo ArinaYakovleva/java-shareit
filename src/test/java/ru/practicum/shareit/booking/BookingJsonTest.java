@@ -29,9 +29,9 @@ class BookingJsonTest {
     @Autowired
     private JacksonTester<CreateBookingDto> createBookingDtoJson;
 
-    User user = new User(1L, "Alex", "alex@mail.com");
+    private final User user = new User(1L, "Alex", "alex@mail.com");
 
-    Item item = new Item(1L, "test", "description", user, true, null);
+    private final Item item = new Item(1L, "test", "description", user, true, null);
 
     @Test
     void testBookingDto() throws Exception {

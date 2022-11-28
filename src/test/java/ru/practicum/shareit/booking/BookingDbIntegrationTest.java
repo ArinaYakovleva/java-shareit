@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.common.CustomPageRequest;
 import ru.practicum.shareit.item.ItemRepository;
@@ -25,29 +24,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @DataJpaTest
-@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class BookingDbIntegrationTest {
     @Autowired
-    BookingRepository bookingRepository;
+    private BookingRepository bookingRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    ItemRepository itemRepository;
+    private ItemRepository itemRepository;
 
-    User user;
+    private User user;
 
-    User secondUser;
-    Item firstItem;
+    private User secondUser;
+    private Item firstItem;
 
-    Item secondItem;
+    private Item secondItem;
 
-    Booking firstItemPastBooking;
-    Booking firstItemFutureBooking;
+    private Booking firstItemPastBooking;
+    private Booking firstItemFutureBooking;
 
-    Booking secondItemFutureBooking;
+    private Booking secondItemFutureBooking;
 
     @BeforeEach
     void init() {
