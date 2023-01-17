@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.practicum.shareit.exception.exceptions.BadRequestException;
 import ru.practicum.shareit.exception.exceptions.ForbiddenException;
 import ru.practicum.shareit.exception.exceptions.NotFoundException;
-import ru.practicum.shareit.exception.exceptions.UniquenessConflictException;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -26,12 +25,6 @@ public class ExceptionHandlerController {
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> handleNotFoundException(NotFoundException e) {
-        return Map.of("error", e.getMessage());
-    }
-
-    @ExceptionHandler(UniquenessConflictException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> handleUniquenessException(UniquenessConflictException e) {
         return Map.of("error", e.getMessage());
     }
 

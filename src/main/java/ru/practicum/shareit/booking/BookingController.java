@@ -6,6 +6,8 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.ConfirmedBookingDto;
 import ru.practicum.shareit.booking.dto.CreateBookingDto;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -19,7 +21,7 @@ public class BookingController {
     }
 
     @PostMapping
-    public CreateBookingDto addBooking(@RequestBody CreateBookingDto bookingDto, @RequestHeader("X-Sharer-User-Id") Long bookerId) {
+    public BookingDto addBooking(@RequestBody CreateBookingDto bookingDto, @RequestHeader("X-Sharer-User-Id") Long bookerId) {
         return bookingService.addBooking(bookingDto, bookerId);
     }
 
@@ -36,12 +38,18 @@ public class BookingController {
     }
 
     @GetMapping
-    public List<BookingDto> getAllBookings(@RequestParam(required = false, defaultValue = "ALL") String state, @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return bookingService.getAllBookings(state, userId, false);
+    public List<BookingDto> getAllBookings(@RequestParam(required = false, defaultValue = "ALL") String state,
+                                           @RequestHeader("X-Sharer-User-Id") Long userId,
+                                           @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                           @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
+        return bookingService.getAllBookings(state, userId, false, from, size);
     }
 
     @GetMapping("/owner")
-    public List<BookingDto> getBookingsByOwner(@RequestParam(required = false, defaultValue = "ALL") String state, @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return bookingService.getAllBookings(state, userId, true);
+    public List<BookingDto> getBookingsByOwner(@RequestParam(required = false, defaultValue = "ALL") String state,
+                                               @RequestHeader("X-Sharer-User-Id") Long userId,
+                                               @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                               @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
+        return bookingService.getAllBookings(state, userId, true, from, size);
     }
 }

@@ -1,13 +1,15 @@
 package ru.practicum.shareit.booking;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDTOMapper;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.ConfirmedBookingDto;
 import ru.practicum.shareit.booking.dto.CreateBookingDto;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.common.CustomPageRequest;
 import ru.practicum.shareit.exception.exceptions.BadRequestException;
 import ru.practicum.shareit.exception.exceptions.NotFoundException;
 import ru.practicum.shareit.item.ItemRepository;
@@ -21,21 +23,15 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
     private final BookingRepository repository;
     private final UserRepository userRepository;
 
     private final ItemRepository itemRepository;
 
-    @Autowired
-    public BookingServiceImpl(BookingRepository repository, UserRepository userRepository, ItemRepository itemRepository) {
-        this.repository = repository;
-        this.userRepository = userRepository;
-        this.itemRepository = itemRepository;
-    }
-
     @Override
-    public CreateBookingDto addBooking(CreateBookingDto bookingDto, Long bookerId) {
+    public BookingDto addBooking(CreateBookingDto bookingDto, Long bookerId) {
         User user = userRepository.findById(bookerId)
                 .orElseThrow(() -> {
                     String errorMessage = String.format("Пользователь с id=%d не найден", bookerId);
@@ -49,7 +45,7 @@ public class BookingServiceImpl implements BookingService {
                     throw new NotFoundException(errorMessage);
                 });
 
-        checkDates(bookingDto.getStart(), bookingDto.getEnd());
+        checkDates(item.getId(), bookingDto.getStart(), bookingDto.getEnd());
 
         if (!item.getAvailable()) {
             String errorMessage = String.format("Вещь с id=%d не доступна для бронирования", item.getId());
@@ -67,7 +63,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = repository.saveAndFlush(BookingDTOMapper
                 .fromCreateBookingDto(bookingDto, user, item, BookingStatus.WAITING));
         log.info(String.format("Добавление бронирование: %s", booking));
-        return BookingDTOMapper.toCreateBookingDto(booking);
+        return BookingDTOMapper.toBookingDto(booking);
     }
 
     @Override
@@ -97,7 +93,6 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto getBooking(Long bookingId, Long userId) {
-
         Booking booking = repository.findById(bookingId)
                 .orElseThrow(() -> {
                     String errorMessage = String.format("Бронирование с id=%d не найдено", bookingId);
@@ -113,7 +108,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getAllBookings(String state, Long userId, boolean isByOwner) {
+    public List<BookingDto> getAllBookings(String state, Long userId, boolean isByOwner, Integer from, Integer size) {
+        CustomPageRequest pageRequest = new CustomPageRequest(from, size);
         BookingState stateValue;
         try {
             stateValue = BookingState.valueOf(state);
@@ -129,42 +125,44 @@ public class BookingServiceImpl implements BookingService {
             throw new NotFoundException(errorMessage);
         }
         if (isByOwner) {
-            return getBookingsByOwner(stateValue, userId);
+            return getBookingsByOwner(stateValue, userId, pageRequest);
         }
 
-        return getBookingsByBooker(stateValue, userId);
+        return getBookingsByBooker(stateValue, userId, pageRequest);
     }
 
-    private List<BookingDto> getBookingsByOwner(BookingState state, Long userId) {
+    private List<BookingDto> getBookingsByOwner(BookingState state, Long userId, Pageable pageable) {
         List<BookingDto> bookings;
         switch (state) {
             case CURRENT:
-                bookings = repository.findAllCurrentByOwner(userId, LocalDateTime.now()).stream()
+                bookings = repository.findAllCurrentByOwner(userId, LocalDateTime.now(), pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
             case PAST:
-                bookings = repository.findAllPastByOwner(userId, LocalDateTime.now()).stream()
+                bookings = repository.findAllPastByOwner(userId, LocalDateTime.now(), pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
             case FUTURE:
-                bookings = repository.findAllFutureByOwner(userId, LocalDateTime.now()).stream()
+                bookings = repository.findAllFutureByOwner(userId, LocalDateTime.now(), pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
             case WAITING:
-                bookings = repository.findAllByItem_Owner_IdAndStatusOrderByEndDesc(userId, BookingStatus.WAITING).stream()
+                bookings = repository
+                        .findAllByItem_Owner_IdAndStatusOrderByEndDesc(userId, BookingStatus.WAITING, pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
             case REJECTED:
-                bookings = repository.findAllByItem_Owner_IdAndStatusOrderByEndDesc(userId, BookingStatus.REJECTED).stream()
+                bookings = repository
+                        .findAllByItem_Owner_IdAndStatusOrderByEndDesc(userId, BookingStatus.REJECTED, pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
             default:
-                bookings = repository.findAllByItem_Owner_IdOrderByEndDesc(userId).stream()
+                bookings = repository.findAllByItem_Owner_IdOrderByEndDesc(userId, pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
@@ -172,36 +170,38 @@ public class BookingServiceImpl implements BookingService {
         return bookings;
     }
 
-    private List<BookingDto> getBookingsByBooker(BookingState state, Long userId) {
+    private List<BookingDto> getBookingsByBooker(BookingState state, Long userId, Pageable pageable) {
         List<BookingDto> bookings;
         switch (state) {
             case CURRENT:
-                bookings = repository.findAllCurrentByBooker(userId, LocalDateTime.now()).stream()
+                bookings = repository.findAllCurrentByBooker(userId, LocalDateTime.now(), pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
             case PAST:
-                bookings = repository.findAllPastByBooker(userId, LocalDateTime.now()).stream()
+                bookings = repository.findAllPastByBooker(userId, LocalDateTime.now(), pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
             case FUTURE:
-                bookings = repository.findAllFutureByBooker(userId, LocalDateTime.now()).stream()
+                bookings = repository.findAllFutureByBooker(userId, LocalDateTime.now(), pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
             case WAITING:
-                bookings = repository.findAllByBooker_IdAndStatusOrderByEnd(userId, BookingStatus.WAITING).stream()
+                bookings = repository
+                        .findAllByBooker_IdAndStatusOrderByEnd(userId, BookingStatus.WAITING, pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
             case REJECTED:
-                bookings = repository.findAllByBooker_IdAndStatusOrderByEnd(userId, BookingStatus.REJECTED).stream()
+                bookings = repository
+                        .findAllByBooker_IdAndStatusOrderByEnd(userId, BookingStatus.REJECTED, pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
             default:
-                bookings = repository.findAllByBooker_IdOrderByEndDesc(userId).stream()
+                bookings = repository.findAllByBooker_IdOrderByEndDesc(userId, pageable).stream()
                         .map(BookingDTOMapper::toBookingDto)
                         .collect(Collectors.toList());
                 break;
@@ -209,19 +209,22 @@ public class BookingServiceImpl implements BookingService {
         return bookings;
     }
 
-    private void checkDates(LocalDateTime start, LocalDateTime end) {
+    private void checkDates(Long itemId, LocalDateTime start, LocalDateTime end) {
         String message;
         if (end.isBefore(start)) {
             message = "Дата окончания бронирования не может быть раньше начала";
+            log.error(message);
             throw new BadRequestException(message);
         }
         if (start.isBefore(LocalDateTime.now())) {
             message = "Дата начала бронирования не может быть в прошлом";
+            log.error(message);
             throw new BadRequestException(message);
         }
-        List<Booking> overlappingBookings = repository.findAllOverlappedBookings(start, end);
+        List<Booking> overlappingBookings = repository.findAllOverlappedBookings(itemId, start, end);
         if (!overlappingBookings.isEmpty()) {
             message = "Вещь недоступна для бронирования в эти даты";
+            log.error(message);
             throw new BadRequestException(message);
         }
     }

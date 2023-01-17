@@ -5,7 +5,7 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
-public abstract class BookingDTOMapper {
+public final class BookingDTOMapper {
     public static BookingDto toBookingDto(Booking booking) {
         return new BookingDto(
                 booking.getId(),
@@ -14,26 +14,6 @@ public abstract class BookingDTOMapper {
                 booking.getEnd(),
                 booking.getBooker(),
                 booking.getStatus()
-        );
-    }
-
-    public static Booking fromBookingDto(BookingDto booking, User booker, Item item, BookingStatus status) {
-        return new Booking(
-                booking.getId(),
-                item,
-                booker,
-                booking.getStart(),
-                booking.getEnd(),
-                status
-        );
-    }
-
-    public static CreateBookingDto toCreateBookingDto(Booking booking) {
-        return new CreateBookingDto(
-                booking.getId(),
-                booking.getItem().getId(),
-                booking.getStart(),
-                booking.getEnd()
         );
     }
 
@@ -53,7 +33,9 @@ public abstract class BookingDTOMapper {
                 booking.getId(),
                 booking.getStatus(),
                 booking.getBooker(),
-                booking.getItem()
+                booking.getItem(),
+                booking.getStart(),
+                booking.getEnd()
         );
     }
 
